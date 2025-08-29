@@ -1,4 +1,3 @@
-````markdown
 # LC Dashboard
 
 A Flask-based dashboard to analyze Local Chapter (LC) activity over time.
@@ -40,9 +39,9 @@ A Flask-based dashboard to analyze Local Chapter (LC) activity over time.
 6. **Run the app:**
 
    ```bash
-    flask --app app.py init-db
-    (Optional sample data) flask --app app.py seed
-    flask --app app.py run
+    flask --app main.py init-db
+    (Optional sample data) flask --app main.py seed
+    flask --app main.py run
     Then open http://127.0.0.1:5000/.
    ```
 ## **Main Pages**
@@ -96,20 +95,4 @@ A Flask-based dashboard to analyze Local Chapter (LC) activity over time.
   - Validates and parses CSV data
   - Performs upsert operations (update existing or insert new records)
   - Provides feedback via flash messages
-
-## **CLI Commands** (Not web routes, but available via command line)
-
-### 9. `flask init-db` - **Database Initialization**
-- **Purpose**: Create database tables
-
-### 10. `flask seed` - **Sample Data Seeding**
-- **Purpose**: Populate database with demo data for testing
-
-## **Key Functionality Summary**
-- **Dashboard**: Overview with search and visualization
-- **Data Management**: Upload and export capabilities  
-- **APIs**: Programmatic access to LC activity data
-- **Reporting**: Active/inactive tracking and trend analysis
-- **Search**: Individual LC timeline exploration
-
 ```
