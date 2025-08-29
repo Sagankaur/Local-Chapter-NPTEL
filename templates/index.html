@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card card-stat shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted">Latest Year</div>
+            <div class="fs-3 fw-bold">{{ latest_year if latest_year is not none else '—' }}</div>
+          </div>
+          <span class="badge bg-secondary">as of dataset</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card card-stat shadow-sm">
+      <div class="card-body">
+        <div class="text-muted">Active LCs (Latest)</div>
+        <div class="fs-3 fw-bold text-success">{{ active_now }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card card-stat shadow-sm">
+      <div class="card-body">
+        <div class="text-muted">Inactive LCs (Were once active)</div>
+        <div class="fs-3 fw-bold text-danger">{{ inactive_count }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header">Trend: Active vs Inactive (Year-wise)</div>
+      <div class="card-body">
+        <canvas id="trendChart" height="120"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Inactive LCs (List)</span>
+        <a class="btn btn-sm btn-outline-warning" href="/export_inactive">Download CSV</a>
+      </div>
+      <div class="card-body table-wrap">
+        {% if inactive_list %}
+        <table class="table table-sm table-hover">
+          <thead>
+            <tr><th>LC ID</th></tr>
+          </thead>
+          <tbody>
+            {% for lc in inactive_list %}
+              <tr><td>{{ lc }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+          <div class="text-muted">No inactive LCs.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-3">
+  <div class="col-lg-12">
+    <div class="card shadow-sm">
+      <div class="card-header">Search by LC ID</div>
+      <div class="card-body">
+        <form class="row g-2" method="get" action="/">
+          <div class="col-auto">
+            <input type="text" class="form-control" name="lc_id" value="{{ lc_id }}" placeholder="Enter LC ID (e.g., LC001)" required>
+          </div>
+          <div class="col-auto">
+            <button class="btn btn-primary" type="submit">Search</button>
+            <a class="btn btn-outline-secondary" href="/">Clear</a>
+          </div>
+        </form>
+        <hr>
+        <div>
+          <canvas id="lcChart" height="120"></canvas>
+        </div>
+        <div id="lcMeta" class="mt-2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Trend chart
+  const trendData = {{ trend_json|safe }};
+  const years = trendData.map(d => d.year);
+  const activeVals = trendData.map(d => d.active);
+  const inactiveVals = trendData.map(d => d.inactive);
+
+  const ctx = document.getElementById('trendChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: years,
+        datasets: [
+          { label: 'Active', data: activeVals },
+          { label: 'Inactive', data: inactiveVals }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'top' } },
+        scales: { y: { beginAtZero: true, precision: 0 } }
+      }
+    });
+  }
+
+  // LC timeline chart
+  const lcTimeline = {{ lc_timeline_json|safe }};
+  const lcIdVal = {{ lc_id|tojson }};
+  const lcCtx = document.getElementById('lcChart');
+  const lcMeta = document.getElementById('lcMeta');
+  if (lcCtx) {
+    if (lcTimeline.length > 0) {
+      const labels = lcTimeline.map(r => r.year);
+      const enr = lcTimeline.map(r => r.enrollments);
+      const reg = lcTimeline.map(r => r.registrations);
+      new Chart(lcCtx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Enrollments', data: enr },
+            { label: 'Registrations', data: reg }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'top' } },
+          scales: { y: { beginAtZero: true, precision: 0 } }
+        }
+      });
+      const yearsActive = lcTimeline.filter(r => r.active).map(r => r.year);
+      const yearsInactive = lcTimeline.filter(r => !r.active).map(r => r.year);
+      lcMeta.innerHTML = `<span class="badge badge-active me-2">Active in: ${yearsActive.join(', ') || '—'}</span>` +
+                         `<span class="badge badge-inactive">Inactive in: ${yearsInactive.join(', ') || '—'}</span>`;
+    } else {
+      lcMeta.innerHTML = '<span class="text-muted">No LC selected or no data for this LC.</span>';
+    }
+  }
+</script>
+{% endblock %}
